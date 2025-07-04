@@ -146,6 +146,60 @@ class ArticleController{
         }
     }
 
+    public function getArticlesByCategoryId(int $categoryId)
+    {
+        global $mysqli;
+        header('Content-Type: application/json');
+
+        try {
+            $stmt = $mysqli->prepare(
+                "SELECT id, name, author, description
+                   FROM articles
+                  WHERE category_id = ?"
+            );
+            $stmt->bind_param('i', $categoryId);
+            $stmt->execute();
+            $articles = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+            echo ResponseService::success_response($articles, 200);
+        } catch (Exception $e) {
+            echo ResponseService::error_response(
+                $e->getMessage(),
+                $e->getCode() ?: 500
+            );
+        }
+    }
+
+    public function getCategoryByArticleId(int $articleId)
+    {
+        global $mysqli;
+        header('Content-Type: application/json');
+
+        try {
+            $stmt = $mysqli->prepare(
+                "SELECT c.id, c.name
+                   FROM categories c
+                   JOIN articles   a ON a.category_id = c.id
+                  WHERE a.id = ?"
+            );
+            $stmt->bind_param('i', $articleId);
+            $stmt->execute();
+            $category = $stmt->get_result()->fetch_assoc();
+
+            if (! $category) {
+                throw new Exception('No category found for that article', 404);
+            }
+
+            echo ResponseService::success_response($category, 200);
+        } catch (Exception $e) {
+            echo ResponseService::error_response(
+                $e->getMessage(),
+                $e->getCode() ?: 500
+            );
+        }
+    }
+
+
 
 }
 
